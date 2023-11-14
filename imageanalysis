@@ -1,0 +1,37 @@
+import matplotlib.pyplot as plt #for plotting
+import cv2 #for reading image
+from scipy.signal import find_peaks,peak_widths,peak_prominences #for finding peaks
+import numpy as np #for numbers
+
+temp_val = 0 #value to be used when summing up columns
+sum_list = [] #will hold the intensity value for each column
+x = [] #holds values from 0 to width of image
+micron_to_pixel = 500/82.5 #length of scalebar in microns to length of scalebar in pixels
+
+image1 = cv2.imread('C:/Users/cadel/Downloads/hubble.jpg', 0) #reading image
+thresh_img = cv2.adaptiveThreshold(image1, 1, cv2.ADAPTIVE_THRESH_MEAN_C,cv2.THRESH_BINARY,51,1) #binarizing image
+plt.imshow(thresh_img,cmap = 'gray')
+
+for i in range(0,len(thresh_img[0])): #number of columns
+    for j in range(0,len(thresh_img)): #number of rows
+        temp_val += thresh_img[j][i] #adds either a 0 or 1 to the column value
+    sum_list.append(temp_val) #adds the intensity value of particular column to list
+    temp_val = 0 #resets the temporary intensity value
+    x.append(i) #adds a value to the x-axis
+peaks, _ = find_peaks(sum_list, prominence = 75) #finds the peaks of the data, can set different cutoffs but a lowball visual works fine
+plt.figure() #creates a figure
+plt.ylabel('Intensity') #y-axis label
+plt.xlabel('X') #x-axis label
+plt.plot(x,sum_list) #plots intensities of all columns
+
+peak_intensities = [] #creates a list for the intensities of the peaks
+for i in range(0,len(peaks)): #iterates through the peaks
+    peak_intensities.append(sum_list[peaks[i]]) #adds the intensities to a list
+plt.plot(peaks,peak_intensities,'+') #plots the peaks
+
+plt.show() #not important, just gets rid of some strange text
+
+pp = peak_widths(sum_list,peaks,rel_height = .6) #finds width of lines
+average_width = np.average(pp[0]) #averages all line widths
+width = average_width * micron_to_pixel #converts from Python units to microns
+print(str(round(width,3)) + ' microns') #prints the width 
